@@ -8,13 +8,13 @@ class rnn_optimizer:
 
     def call_rnn(self, optimizee_grads): 
         '''
-        Given a sequence of optimizee gradients 
-        Give how the optimizee parameters should update 
+        Given a sequence of optimizee gradients for one optimizee trainable parameter
+        Tell how the optimizee parameter should update 
 
-        :param optimizee_grads: (a sequence of) optimizee gradients 
-                                [window_sz, optimizee_trainable_params]
-        :return optimizee_updates: (a sequence of) optimizee update rules
-                                [window_sz, optimizee_trainable_params_shape]
+        :param optimizee_grads: (a sequence of) optimizee gradients for one optimizee trainable param
+                                [window_sz, param_shape]
+        :return optimizee_updates: (a sequence of) optimizee param update for one optimizee trainable param
+                                [window_sz, param_shape]
         '''
         # TODO: implement this 
 
