@@ -21,6 +21,6 @@ class SimpleModel:
         '''
         W, y = labels
         diff = tf.matmul(W, predictions) - y 
-        loss = tf.einsum('ab,ab', diff, diff) 
+        loss = tf.tensordot(diff, diff, 1)
 
         return loss 
