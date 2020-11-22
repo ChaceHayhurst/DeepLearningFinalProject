@@ -1,11 +1,34 @@
 import tensorflow as tf 
+import numpy as np
 from square_loss_model import SimpleModel 
+from mnist_model import MNIST_Model
 
-def train(optimizee, optimizer, train_inputs, train_labels): 
-    # TODO: Form Data 
+def train(optimizee, optimizer, train_inputs, train_labels, num_examples): 
+    # Grab metrics 
+    # NOTE: All optimizees must take labels, but some take no inputs
+    if (not train_inputs is None): assert(num_examples == train_inputs.shape[0])
+    # If our model takes no inputs, set batch_sz to be 1
+    batch_sz = optimizee.batch_size if (not train_inputs is None) else 1
+    num_batches = num_examples // batch_sz 
 
-    # TODO: Loop through batches to train 
-    pass 
+    # Loop through batches to train 
+    for i in range(0, num_batches): 
+        if not train_inputs is None: 
+            batch_inputs = train_inputs[i*batch_sz:(i+1)*batch_sz,]
+        else: batch_inputs = None
+        batch_labels = train_labels[i*batch_sz:(i+1)*batch_sz] 
+
+        with tf.GradientTape() as tape: 
+            preds = optimizee.call(batch_inputs) 
+            optimizee_loss = optimizee.loss_function(preds, batch_labels)
+        
+        print("At batch {}. Optimizee loss = {}".format(i, optimizee_loss))
+        optimizee_grads = tape.gradient(optimizee_loss, optimizee.trainable_variables)
+        optimizer.apply_gradients(zip(optimizee_grads, optimizee.trainable_variables))
+
+        # TODO: Insert optimizer training logic here!! 
+
+    return  
 
 def test(optimizee, test_inputs, test_labels): 
     # TODO: Form Data 
@@ -18,22 +41,67 @@ def visualize_train_loss():
     # TODO: Figure out what to do here... 
     pass 
 
-def visualize_test_loss()
+def visualize_test_loss():
     # TODO: Figure out what to do here... 
     pass 
 
-def main(): 
-    # TODO: Grab Data 
+def main(model_name): 
+    # Grab Data 
+    train_inputs = None
+    test_inputs = None 
+    train_labels = None 
+    test_labels = None 
+    train_num_examples = 0
+    test_num_examples = 0
 
-    # TODO: Initialize several optimizee-optimizer pairs: 
+    if (model_name == "SIMPLE_SQUARE"): 
+        train_num_examples = 1000
+        test_num_examples = 1000
+
+        train_W = tf.random.normal((2, 2), mean = 1.0, stddev = 1.0)
+        train_y = tf.random.normal((2,), mean = 1.0, stddev = 1.0)
+        train_labels = [(train_W, train_y) for i in range(0, train_num_examples)]
+
+        test_W = tf.random.normal((2, 2), mean = 1.0, stddev = 1)
+        test_y = tf.random.normal((2,), mean = 1.0, stddev = 1)
+        test_labels = [(test_W, test_y) for i in range(0, test_num_examples)]
+
+    if (model_name == "MNIST"): 
+        # Load mnist data 
+        mnist = tf.keras.datasets.mnist 
+        (train_inputs, train_labels), (test_inputs, test_labels) = mnist.load_data()
+        
+        # Normalize data 
+        train_inputs, test_inputs = train_inputs / 255.0, test_inputs / 255.0 
+        train_inputs = train_inputs.astype(np.float32)
+
+        # Compute number of examples 
+        train_num_examples = train_inputs.shape[0]
+        test_num_examples = test_inputs.shape[0]
+
+        # Reshape inputs 
+        train_inputs = np.reshape(train_inputs, (train_num_examples, -1)) 
+        test_inputs = np.reshape(test_inputs, (test_num_examples, -1))
+
+    # Initialize several optimizee-optimizer pairs: 
     # one for our optimizer, several more for benchmark optimizers
+    if (model_name == "SIMPLE_SQUARE"): 
+        optimizee = SimpleModel(size = 2) 
+    elif (model_name == "MNIST"): 
+        optimizee = MNIST_Model()
+
+    adam_optimizer = tf.keras.optimizers.Adam(learning_rate = 0.01) 
 
     # TODO: Train each optimizee-optimizer pair for several epochs 
+    num_epochs = 10
+    for i in range(0, num_epochs): 
+        print("Starting epoch {}".format(i+1))
+        train(optimizee, adam_optimizer, train_inputs, train_labels, train_num_examples) 
 
     # TODO: Test each model 
 
     # TODO: Visualize results 
-    pass 
+    return  
 
 if __name__ == "__main__": 
-    main()
+    main("MNIST")
