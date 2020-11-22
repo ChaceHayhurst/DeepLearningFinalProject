@@ -1,3 +1,6 @@
+import tensorflow as tf 
+from square_loss_model import SimpleModel 
+
 def train(optimizee, optimizer, train_inputs, train_labels): 
     # TODO: Form Data 
 
