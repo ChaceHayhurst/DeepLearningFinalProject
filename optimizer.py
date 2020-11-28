@@ -4,6 +4,9 @@ class rnn_optimizer:
 
         # TODO: Initialize Trainable Parameters 
 
+        # TODO: Initialize States
+        self.hidden = None 
+
         pass 
 
     def call_rnn(self, optimizee_grads): 
