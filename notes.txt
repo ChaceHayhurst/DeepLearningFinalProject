@@ -1,0 +1,68 @@
+class optimizee: 
+    self.theta = tf.Variable(zeros) 
+
+    self.call(): 
+        return self.theta 
+
+    self.get_parameters(): 
+        return dictionary of trainable params
+
+    self.loss_function(theta): 
+        return Optimizee_loss.compute_loss(theta)
+
+class optimizee_loss: 
+    self.landscape_W 
+    self.landscape_b 
+
+    self.compute_loss(theta): 
+        return |landscape_W * theta - landscape_b| ^ 2
+
+class optimizer: 
+    self.LSTM1
+    self.LSTM2
+
+    self.call(gradient, hidden_state, cell_state): 
+        change, new_hidden_state, new_cell_state = self.LSTM2(self.LSTM1(gradient, hidden_state, cell_state))
+
+train_loop(optimizer, optimizee, optimizee_loss_object): 
+    hidden_state = 0
+    cell_state = 0
+    optimizee_params = 0
+
+    optimizee_losses = []
+
+    for N steps: 
+
+        optimizee_params = optimizee.get_parameters()
+        optimizee_output = optimizee.call(init_optimizee_params)
+        loss = optimizee.loss_function(optimizee_output)
+
+        optimizee_losses += [loss]
+
+        hidden_state2 = zeros
+        cell_state2 = zeros
+
+        for param in optimizee_params: 
+            gradient = tf.gradient(loss with respect to param)
+            change, new_hidden_state, new_cell_state = optimizer.call(tf.stop_gradient(gradient), hidden_state[param], cell_state[param])
+
+            hidden_state2[param] = new_hidden_state
+            cell_state2[param] = new_cell_state 
+
+            new_optimizee_params = copy of optimizee_params
+            new_optimizee_params[param] += change  
+
+        if N % UNROLL_FACTOR == 0: 
+            optimizer_loss = sum(optimizee_losses)
+            optimizer_gradient = tf.gradient(optimizer_loss with respect to all optimizer params)
+            SGD.apply_gradients(optimizer_gradient, optmizer_trainable params)
+
+            optmizee_losses = []
+            optimizee = new Optimizee(params = new_optimizee_params) 
+            hidden_state = new tf.Variable(data ) for data in hidden_state2
+            cell_state = new tf.Variable for data in cell_state2
+        else:
+            hidden_state = hidden_state2
+            cell_state = cell_state2 
+
+
