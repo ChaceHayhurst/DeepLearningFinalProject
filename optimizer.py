@@ -1,11 +1,11 @@
+import tensorflow as tf
+
 class rnn_optimizer: 
     def __init__(self): 
         # TODO: Initialize Hyperparameters 
-
+        
         # TODO: Initialize Trainable Parameters 
-
-        # TODO: Initialize States
-        self.hidden = None 
+        
 
         pass 
 
