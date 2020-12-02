@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from square_loss_model import SimpleModel 
 from mnist_model import MNIST_Model
+from matplotlib import pyplot as plt
 
 def train(optimizee, optimizer, train_inputs, train_labels, num_examples): 
     # Grab metrics 
@@ -37,13 +38,24 @@ def test(optimizee, test_inputs, test_labels):
 
     pass 
 
-def visualize_train_loss(): 
+def visualize_train_loss(optimizee_loss, optimizer_loss): 
     # TODO: Figure out what to do here... 
-    pass 
+    x1 = np.arange(1, len(optimizee_loss)+1) 
+    x2 = np.arange(1, len(optimizer_loss)+1)
+    fig, (ax1, ax2) = plt.subplots(2)
+    fig.suptitle('Loss for optimizee, optimizer')
+    ax1.plot(x1, optimizee_loss)
+    ax2.plot(x2, optimizer_loss)
 
-def visualize_test_loss():
+def visualize_test_loss(ADAM_trained_loss, optimizee_trained_loss):
     # TODO: Figure out what to do here... 
-    pass 
+    x = np.arange(1, len(ADAM_trained_loss)+1)
+    plt.xlabel('Steps')
+    plt.ylabel('Loss')
+    plt.title('Loss for Adam-trained model and Optimizee-trained model')
+    plt.plot(x, ADAM_trained_loss, color='red')
+    plt.plot(x, optimizee_trained_loss, color='green')
+    plt.show()
 
 def main(model_name): 
     # Grab Data 
