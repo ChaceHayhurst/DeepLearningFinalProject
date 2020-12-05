@@ -1,7 +1,7 @@
 import tensorflow as tf 
 
 class Square_Loss_Optimizee(tf.keras.Model): 
-    def __init__(self, size = 10, params = None): 
+    def __init__(self, size = 2, params = None): 
         '''
         :param size: the dimension of the vector theta, which is always equal to the dimension of output
         :param params: a dictionary for preset values for trainable params
@@ -10,22 +10,31 @@ class Square_Loss_Optimizee(tf.keras.Model):
         
         # Hyperparameters
         self.size = size 
+        self.batch_size = 1
 
         # Trainable parameters 
         if params == None: 
-            self.theta = tf.Variable(tf.random.normal((size,), mean = 0.0, stddev = 0.1, dtype = tf.float32))
+            param_ids = range(0, size)
+            self.params = {id:0 for id in param_ids} 
         else: 
-            self.theta = params['theta']
+            self.params = params
+
+        self.theta = tf.Variable(list(self.params.values()))
 
         return 
 
-    def call(self, input = None): 
-        return self.theta 
-
     def get_params(self): 
-        # TODO: This is incorrect!! We need a dictionary with one 
-        #       Key-Value pair per COORDINATE of theta
-        return {'theta': self.theta} 
+        return self.params
+
+    def get_param_tensors(self): 
+        return [self.theta]
+
+    def set_params(self, params): 
+        self.params = params
+        self.theta = tf.Variable(list(self.params.values()))
+
+    def call(self, input = None): 
+        return self.theta
 
     def loss_function(self, predictions, loss_computer): 
         '''

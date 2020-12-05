@@ -1,35 +1,66 @@
 import tensorflow as tf 
 import numpy as np
-from square_loss_model import SimpleModel 
+from square_loss_model import Square_Loss_Optimizee 
 from mnist_model import MNIST_Model
 from matplotlib import pyplot as plt
 
-def train(optimizee, optimizer, train_inputs, train_labels, num_examples): 
-    # Grab metrics 
-    # NOTE: All optimizees must take labels, but some take no inputs
-    if (not train_inputs is None): assert(num_examples == train_inputs.shape[0])
-    # If our model takes no inputs, set batch_sz to be 1
-    batch_sz = optimizee.batch_size if (not train_inputs is None) else 1
-    num_batches = num_examples // batch_sz 
+def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels = None, loss_computer = None): 
+    unroll_factor = optimizer.unroll_factor
+    batch_size = optimizee.batch_size 
 
-    # Loop through batches to train 
-    for i in range(0, num_batches): 
-        if not train_inputs is None: 
-            batch_inputs = train_inputs[i*batch_sz:(i+1)*batch_sz,]
-        else: batch_inputs = None
-        batch_labels = train_labels[i*batch_sz:(i+1)*batch_sz] 
+    # Grab Optimizee Params
+    optimizee_params = optimizee.get_params()
 
+    # Initialize hidden_states and cell_states 
+    initial_states_for_1 = {
+        param_id:[tf.constant([0.0]), tf.constant([0.0])] for param_id in optimizee_params.keys()
+    }
+    initial_states_for_2 = {
+        param_id:[tf.constant([0.0]), tf.constant([0.0])] for param_id in optimizee_params.keys()
+    }
+    
+    # Initialize the list containing historic optimizee losses
+    optimizee_losses = []
+    
+    # Train Loop 
+    for batch in range(0, num_examples // batch_size): 
+        # TODO: Add logic for cases with train_input and train_labels
+
+        # Optimizee Forward Pass 
+        optimizee_params = optimizee.get_params() 
         with tf.GradientTape() as tape: 
-            preds = optimizee.call(batch_inputs) 
-            optimizee_loss = optimizee.loss_function(preds, batch_labels)
-        
-        print("At batch {}. Optimizee loss = {}".format(i, optimizee_loss))
-        optimizee_grads = tape.gradient(optimizee_loss, optimizee.trainable_variables)
-        optimizer.apply_gradients(zip(optimizee_grads, optimizee.trainable_variables))
+            optimizee_param_tensors = optimizee.get_param_tensors()
+            optimizee_output = optimizee.call() 
+            loss = optimizee.loss_function(optimizee_output, loss_computer)
 
-        # TODO: Insert optimizer training logic here!! 
+        # Preparation for Backprop 
+        optimizee_losses += [loss]         
+        new_states_for_1 = {
+            param_id:[tf.constant([0.0]), tf.constant([0.0])] for param_id in optimizee_params.keys()
+        }
+        new_states_for_2 = {
+            param_id:[tf.constant([0.0]), tf.constant([0.0])] for param_id in optimizee_params.keys()
+        }
 
-    return  
+        # Coordinate-wize Backprop on Optimizee
+        gradients = tape.gradient(loss, optimizee_param_tensors)
+        for param_id in optimizee_params.keys(): 
+            grad = tf.stop_gradient(gradients[param_id])
+            initial_states_for_1 = initial_states_for_1[param_id]
+            initial_states_for_2 = initial_states_for_2[param_id]
+
+            change, new_state_for_1, new_state_for_2 = optimizer.call(grad, initial_states_for_1, initial_states_for_2)
+
+            new_states_for_1[param_id] = new_state_for_1 
+            new_states_for_2[param_id] = new_state_for_2 
+
+            new_optimizee_params = optimizee_params.copy() 
+            new_optimizee_params[param_id] += float(change) 
+
+        # Backprop on Optimizer
+        if batch % unroll_factor == 0: 
+            optimizer_loss = sum(optimizee_losses[-unroll_factor:]) 
+            # TODO: Finish this
 
 def test(optimizee, test_inputs, test_labels): 
     # TODO: Form Data 
@@ -98,7 +129,7 @@ def main(model_name):
     # Initialize several optimizee-optimizer pairs: 
     # one for our optimizer, several more for benchmark optimizers
     if (model_name == "SIMPLE_SQUARE"): 
-        optimizee = SimpleModel(size = 2) 
+        optimizee = Square_Loss_Optimizee(size = 2) 
     elif (model_name == "MNIST"): 
         optimizee = MNIST_Model()
 
