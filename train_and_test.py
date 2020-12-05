@@ -21,20 +21,23 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
     
     # Initialize the list containing historic optimizee losses
     optimizee_losses = []
+    all_optimizee_losses_ever = []
     
     # Train Loop 
     for batch in range(0, num_examples // batch_size): 
         # TODO: Add logic for cases with train_input and train_labels
+        train_inputs_batch = train_inputs[batch*batch_size:batch*(batch_size+1)]
+        train_labels_batch = train_labels[batch*batch_size:batch*(batch_size+1)]
 
         # Optimizee Forward Pass 
         optimizee_params = optimizee.get_params() 
         with tf.GradientTape() as tape: 
-            optimizee_param_tensors = optimizee.get_param_tensors()
-            optimizee_output = optimizee.call() 
-            loss = optimizee.loss_function(optimizee_output, loss_computer)
+            optimizee_param_tensors = optimizee.get_param_tensors() #different for MNIST?
+            optimizee_output = optimizee.call(train_inputs_batch)
+            loss = optimizee.loss_function(optimizee_output, train_labels_batch, loss_computer) #this would need to take in the labels, would it not?
 
         # Preparation for Backprop 
-        optimizee_losses += [loss]         
+        optimizee_losses.append(loss)     
         new_states_for_1 = {
             param_id:[tf.constant([0.0]), tf.constant([0.0])] for param_id in optimizee_params.keys()
         }
@@ -42,25 +45,48 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
             param_id:[tf.constant([0.0]), tf.constant([0.0])] for param_id in optimizee_params.keys()
         }
 
-        # Coordinate-wize Backprop on Optimizee
-        gradients = tape.gradient(loss, optimizee_param_tensors)
+        # Coordinate-wise Backprop on Optimizee
+        gradients = tape.gradient(loss, optimizee_param_tensors) #can we just call tape.gradient like this?
         for param_id in optimizee_params.keys(): 
             grad = tf.stop_gradient(gradients[param_id])
-            initial_states_for_1 = initial_states_for_1[param_id]
-            initial_states_for_2 = initial_states_for_2[param_id]
+            param_initial_state_for_1 = initial_states_for_1[param_id] #identical naming before was confusing
+            param_initial_state_for_2 = initial_states_for_2[param_id]
 
-            change, new_state_for_1, new_state_for_2 = optimizer.call(grad, initial_states_for_1, initial_states_for_2)
+            change, new_state_for_1, new_state_for_2 = optimizer.call(grad, param_initial_state_for_1, param_initial_state_for_2)
+            #Note new_state_for_1 is [new_hidden_state_1, new_cell_state_1], same for 2
 
             new_states_for_1[param_id] = new_state_for_1 
             new_states_for_2[param_id] = new_state_for_2 
 
-            new_optimizee_params = optimizee_params.copy() 
-            new_optimizee_params[param_id] += float(change) 
+            new_optimizee_params = optimizee_params.copy() #we may need copy.deepcopy
+            new_optimizee_params[param_id] += float(change) #where are we keeping all these new_optimizee_params dictionaries?
 
         # Backprop on Optimizer
         if batch % unroll_factor == 0: 
-            optimizer_loss = sum(optimizee_losses[-unroll_factor:]) 
-            # TODO: Finish this
+            optimizer_loss = sum(optimizee_losses[-unroll_factor:]) #not sure what you were doing here, do we not just sum the entire list?
+            optimizer_params = optimizer.trainable_variables #I assume this is all the params we want?
+            optimizer_gradients = tape.gradient(optimizer_loss, optimizer_params) #but we can't use the same tape, right?
+            optimizer.adam_optimizer.apply_gradients(zip(optimizer_gradients, optimizer_params))
+            
+            all_optimizee_losses_ever.append(optimizee_losses) #just for the purposes of visualization
+            optimizee_losses = []
+            #new optimizee
+            if optimizee.__class__.__name__ == 'Square_Loss_Optimizee':
+                optimizee = Square_Loss_Optimizee(params=new_optimizee_params)
+            else:
+                optimizee = MNIST_Model(params=new_optimizee_params) #still need to implement manual param setting for MNIST
+            #new cell and hidden states
+            for param_id in optimizee_params.keys(): #not sure if this is right
+                [new_hidden_1, new_cell_1] = new_states_for_1[param_id]
+                initial_states_for_1[param_id] = [tf.constant(new_hidden_1.numpy()), tf.constant(new_cell_1.numpy())]
+                
+                [new_hidden_2, new_cell_2] = new_states_for_2[param_id]
+                initial_states_for_2[param_id] = [tf.constant(new_hidden_2.numpy()), tf.constant(new_cell_2.numpy())]             
+        else:
+            initial_states_for_1 = new_states_for_1
+            initial_states_for_2 = new_states_for_2
+            
+        visualize_train_loss(all_optimizee_losses_ever, [])
 
 def test(optimizee, test_inputs, test_labels): 
     # TODO: Form Data 
