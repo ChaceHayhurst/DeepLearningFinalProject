@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 class MNIST_Model(tf.keras.Model): 
-    def __init__(self): 
+    def __init__(self, params = None): 
         super(MNIST_Model, self).__init__()
         # initialize hyperparameters 
         self.fc1_unit = 784 
