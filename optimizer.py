@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-class rnn_optimizer: 
+class rnn_optimizer(tf.keras.Model): 
     def __init__(self): 
         # TODO: Initialize Hyperparameters 
         self.layer1_units = 1
@@ -19,6 +19,8 @@ class rnn_optimizer:
             return_sequences = False
         )
 
+        self.learning_rate = .001
+        self.adam_optimizer = tf.keras.optimizers.Adam(self.learning_rate)
         return  
 
     def call(self, optimizee_grads, initial_states_for_1, initial_states_for_2): 
@@ -41,7 +43,7 @@ class rnn_optimizer:
         '''
         # TODO: implement this 
 
-        lstm1_output, new_hidden_state_1, new_cell_state_1 = self.lstm1.call(inputs, initial_state = initial_state_for_1) 
+        lstm1_output, new_hidden_state_1, new_cell_state_1 = self.lstm1.call(optimizee_grads, initial_state = initial_state_for_1) 
         lstm2_output, new_hidden_state_2, new_cell_state_2 = self.lstm2.call(lstm1_output, initial_state = initial_states_for_2)
 
         return lstm2_output, [new_hidden_state_1, new_cell_state_1], [new_hidden_state_2, new_cell_state_2]
