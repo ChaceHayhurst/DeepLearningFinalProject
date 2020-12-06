@@ -33,7 +33,7 @@ class Square_Loss_Optimizee(tf.keras.Model):
         '''
         :param change_tensors: a list containing just one tensor, which is to be added to self.theta
         '''
-        self.theta = self.theta + change_tensors[0]
+        self.theta.assign_add(change_tensors[0])
 
     def call(self, inputs): 
         '''

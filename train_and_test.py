@@ -7,13 +7,16 @@ from square_loss_model import Square_Loss_Optimizee, Square_Loss
 from mnist_model import MNIST_Model
 from optimizer import RNN_Optimizer
 
+#tf.compat.v1.disable_eager_execution()
+
 def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels = None, loss_computer = None): 
     unroll_factor = optimizer.unroll_factor
     batch_size = optimizee.batch_size 
 
-    # Grab Optimizee Params
-    optimizee_params = optimizee.get_param_tensors()
+    # Grab Optimizee Params ids for making the dicts 
     optimizee_param_ids = optimizee.get_param_indices()
+    optimizee_param_tensors = optimizee.get_param_tensors() #different for MNIST?
+
     # NOTE: a param_id will always be of the form [int, tuple], 
     #       where the int indicates which tensor a param is from, 
     #       and the tuple indicates the index of the param within its tensor 
@@ -30,18 +33,18 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
     } # NOTE: in the initial_states dicts, param_ids are hashed after passing to string form 
     
     # Variables for keeping track of historic optimizee losses
-    optimizee_losses_sum = tf.constant(0, dtype = tf.float32)
+    optimizee_losses_sum = tf.zeros(())
     all_optimizee_losses_ever = []
     
     # Train Loop 
-    with tf.GradientTape() as optimizer_tape: 
+    with tf.GradientTape(persistent = True) as optimizer_tape: 
         for batch in range(0, num_examples // batch_size): 
-            # TODO: Add logic for cases with train_input and train_labels
+            print("Starting batch {}".format(batch))
+
             train_inputs_batch = train_inputs[batch*batch_size:batch*(batch_size+1)] if not train_inputs is None else None
             train_labels_batch = train_labels[batch*batch_size:batch*(batch_size+1)] if not train_labels is None else None
 
             # Optimizee Forward Pass 
-            optimizee_param_tensors = optimizee.get_param_tensors() #different for MNIST?
             optimizee_param_shapes = optimizee.get_param_shapes() 
 
             with tf.GradientTape() as optimizee_tape: 
@@ -49,8 +52,9 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
                 loss = optimizee.loss_function(optimizee_output, train_labels_batch, loss_computer) #this would need to take in the labels, would it not?
 
             # Preparation for Backprop 
-            optimizee_losses_sum += loss   
-            all_optimizee_losses_ever += [float(loss)]
+            optimizee_losses_sum += loss
+            print("Optimizee Loss: {}".format(loss))
+            #all_optimizee_losses_ever += [float(loss)]
             new_states_for_1 = {
                 str(param_id):[tf.zeros((1,state_size_for_1), dtype = tf.float32), tf.zeros((1,state_size_for_1), dtype = tf.float32)] for param_id in optimizee_param_ids          
             }
@@ -58,7 +62,6 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
                 str(param_id):[tf.zeros((1,state_size_for_2), dtype = tf.float32), tf.zeros((1,state_size_for_2), dtype = tf.float32)] for param_id in optimizee_param_ids
             }
             new_optimizee_params = [tf.identity(optimizee_param_tensors[i]) for i in range(0, len(optimizee_param_tensors))]
-            optimizee_param_changes = [tf.zeros(optimizee_param_shapes[i]) for i in range(0, len(optimizee_param_shapes))]
 
             # Coordinate-wise Backprop on Optimizee
             gradients = optimizee_tape.gradient(loss, optimizee_param_tensors) 
@@ -77,17 +80,14 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
 
                 # Create a "change" tensor that is zero everywhere, except in 
                 # the index corresponding to param_id, where it is of value change 
-                mask = tf.zeros(optimizee_param_shapes[tensor_id])
-                mask = mask.numpy() 
-                mask[index] = 1.0 
-                mask = tf.convert_to_tensor(mask)
+                mask = tf.scatter_nd([[index]], [1.0], optimizee_param_shapes[tensor_id])
                 change_tensor = change * mask
                 
-                optimizee_param_changes[tensor_id] += change_tensor 
+                optimizee.update_params([change_tensor]) # TODO: Take care of case with more than one tensor! 
                 new_optimizee_params[tensor_id] += change_tensor 
 
             # Backprop on Optimizer
-            if batch % unroll_factor == 0: 
+            if (batch + 1) % unroll_factor == 0: 
                 optimizer_loss = optimizee_losses_sum
                 optimizer_params = optimizer.trainable_variables 
                 optimizer_gradients = optimizer_tape.gradient(optimizer_loss, optimizer_params) 
@@ -110,9 +110,8 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
             else:
                 initial_states_for_1 = new_states_for_1
                 initial_states_for_2 = new_states_for_2
-                optimizee.update_params(optimizee_param_changes)
                 
-            visualize_train_loss(all_optimizee_losses_ever, [])
+            #visualize_train_loss(all_optimizee_losses_ever, [])
 
 def test(optimizee, test_inputs, test_labels): 
     # TODO: Form Data 
