@@ -14,7 +14,7 @@ class Square_Loss_Optimizee(tf.keras.Model):
 
         # Trainable parameters 
         if params == None: 
-            self.theta = tf.Variable(tf.zeros((self.size,)))
+            self.theta = tf.Variable(tf.zeros((self.size,)), name = 'Theta')
         else: 
             self.theta = params[0]
 
