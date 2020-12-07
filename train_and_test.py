@@ -11,28 +11,22 @@ from optimizer import RNN_Optimizer
 
 def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels = None, loss_computer = None): 
     unroll_factor = optimizer.unroll_factor
-    unroll_factor = 1
+    # unroll_factor = 1
     batch_size = optimizee.batch_size 
 
     # Grab Optimizee Params ids for making the dicts 
-    optimizee_param_ids = optimizee.get_param_indices()
-    optimizee_param_tensors = optimizee.get_param_tensors() #different for MNIST?
-
-    # NOTE: a param_id will always be of the form [int, tuple], 
-    #       where the int indicates which tensor a param is from, 
-    #       and the tuple indicates the index of the param within its tensor 
-    #       some param_ids will always be a list of param_id's 
+    optimizee_params = optimizee.get_params() #NOTE: optimizee_params is a list of tuples (param_name, param_tensor)
 
     # Initialize hidden_states and cell_states 
     state_size_for_1 = optimizer.layer1_units
     state_size_for_2 = optimizer.layer2_units
     initial_states_for_1 = {
-        str(param_id):[tf.zeros((1,state_size_for_1), dtype = tf.float32), tf.zeros((1,state_size_for_1), dtype = tf.float32)] for param_id in optimizee_param_ids
+        param_name:[tf.zeros(param_tensor.shape.concatenate(state_size_for_1), dtype = tf.float32), tf.zeros(param_tensor.shape.concatenate(state_size_for_1), dtype = tf.float32)] for param_name, param_tensor in optimizee_params
     }
     initial_states_for_2 = {
-        str(param_id):[tf.zeros((1,state_size_for_2), dtype = tf.float32), tf.zeros((1,state_size_for_2), dtype = tf.float32)] for param_id in optimizee_param_ids
+        param_name:[tf.zeros(param_tensor.shape.concatenate(state_size_for_2), dtype = tf.float32), tf.zeros(param_tensor.shape.concatenate(state_size_for_2), dtype = tf.float32)] for param_name, param_tensor in optimizee_params
     } # NOTE: in the initial_states dicts, param_ids are hashed after passing to string form 
-    
+
     # Variables for keeping track of historic optimizee losses
     all_optimizee_losses_ever = []
 
@@ -49,46 +43,40 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
         train_labels_batch = train_labels[batch*batch_size:batch*(batch_size+1)] if not train_labels is None else None
 
         # Optimizee Forward Pass 
-        optimizee_param_shapes = optimizee.get_param_shapes() 
-
-        #with tf.GradientTape() as optimizee_tape: 
-        optimizee_output = optimizee.call(train_inputs_batch)
-        loss = optimizee.loss_function(optimizee_output, train_labels_batch, loss_computer) #this would need to take in the labels, would it not?
+        with tf.GradientTape() as optimizee_tape: 
+            optimizee_output = optimizee.call(train_inputs_batch)
+            loss = optimizee.loss_function(optimizee_output, train_labels_batch, loss_computer) 
 
         # Preparation for Backprop 
         optimizee_losses_sum.assign_add(loss)
         print("Optimizee Loss: {}".format(loss))
-        #all_optimizee_losses_ever += [float(loss)]
+        all_optimizee_losses_ever += [float(loss)]
+
         new_states_for_1 = {
-            str(param_id):[tf.zeros((1,state_size_for_1), dtype = tf.float32), tf.zeros((1,state_size_for_1), dtype = tf.float32)] for param_id in optimizee_param_ids          
+            param_name:[tf.zeros(param_tensor.shape.concatenate(state_size_for_1), dtype = tf.float32), tf.zeros(param_tensor.shape.concatenate(state_size_for_1), dtype = tf.float32)] for param_name, param_tensor in optimizee_params       
         }
         new_states_for_2 = {
-            str(param_id):[tf.zeros((1,state_size_for_2), dtype = tf.float32), tf.zeros((1,state_size_for_2), dtype = tf.float32)] for param_id in optimizee_param_ids
+            param_name:[tf.zeros(param_tensor.shape.concatenate(state_size_for_2), dtype = tf.float32), tf.zeros(param_tensor.shape.concatenate(state_size_for_2), dtype = tf.float32)] for param_name, param_tensor in optimizee_params
         }
-        new_optimizee_params = [tf.identity(optimizee_param_tensors[i], name = 'Theta') for i in range(0, len(optimizee_param_tensors))]
+        new_optimizee_params = {param_name:tf.identity(param_tensor, name = 'theta') for param_name, param_tensor in optimizee_params}
+        optimizee_param_changes = {}
 
         # Coordinate-wise Backprop on Optimizee
-        gradients = optimizer_tape.gradient(loss, optimizee_param_tensors) 
-        for param_id in optimizee_param_ids: 
-            tensor_id, index = param_id[0], param_id[1]
-            grad = tf.stop_gradient(gradients[tensor_id][index]) 
+        for param_name, param_tensor in optimizee_params: 
+            gradient = optimizee_tape.gradient(loss, param_tensor)
+            gradient = tf.stop_gradient(gradient) 
 
-            param_initial_state_for_1 = initial_states_for_1[str(param_id)] 
-            param_initial_state_for_2 = initial_states_for_2[str(param_id)]
+            param_initial_state_for_1 = initial_states_for_1[param_name] 
+            param_initial_state_for_2 = initial_states_for_2[param_name]
 
-            change, new_state_for_1, new_state_for_2 = optimizer.call(grad, param_initial_state_for_1, param_initial_state_for_2)
+            change, new_state_for_1, new_state_for_2 = optimizer.call(gradient, param_initial_state_for_1, param_initial_state_for_2)
             # NOTE: new_state_for_1 is [new_hidden_state_1, new_cell_state_1], same for 2
 
-            new_states_for_1[str(param_id)] = new_state_for_1 
-            new_states_for_2[str(param_id)] = new_state_for_2 
-
-            # Create a "change" tensor that is zero everywhere, except in 
-            # the index corresponding to param_id, where it is of value change 
-            mask = tf.scatter_nd([[index]], [1.0], optimizee_param_shapes[tensor_id])
-            change_tensor = change * mask
+            new_states_for_1[param_name] = new_state_for_1 
+            new_states_for_2[param_name] = new_state_for_2 
             
-            optimizee.update_params([change_tensor]) # TODO: Take care of case with more than one tensor! 
-            new_optimizee_params[tensor_id] += change_tensor 
+            optimizee_param_changes[param_name] = change
+            new_optimizee_params[param_name] += change 
 
         # Backprop on Optimizer
         if (batch + 1) % unroll_factor == 0: 
@@ -106,12 +94,12 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
             else:
                 optimizee = MNIST_Model(params=new_optimizee_params) 
             #new cell and hidden states
-            for param_id in optimizee_param_ids: #not sure if this is right
-                [new_hidden_1, new_cell_1] = new_states_for_1[str(param_id)]
-                initial_states_for_1[str(param_id)] = [tf.constant(new_hidden_1.numpy()), tf.constant(new_cell_1.numpy())]
+            for param_name, _ in optimizee_params: #not sure if this is right
+                [new_hidden_1, new_cell_1] = new_states_for_1[param_name]
+                initial_states_for_1[param_name] = [tf.constant(new_hidden_1.numpy()), tf.constant(new_cell_1.numpy())]
                 
-                [new_hidden_2, new_cell_2] = new_states_for_2[str(param_id)]
-                initial_states_for_2[str(param_id)] = [tf.constant(new_hidden_2.numpy()), tf.constant(new_cell_2.numpy())]             
+                [new_hidden_2, new_cell_2] = new_states_for_2[param_name]
+                initial_states_for_2[param_name] = [tf.constant(new_hidden_2.numpy()), tf.constant(new_cell_2.numpy())]             
 
             # New Optimizer Tape
             optimizer_tape = tf.GradientTape()
@@ -120,8 +108,9 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
         else:
             initial_states_for_1 = new_states_for_1
             initial_states_for_2 = new_states_for_2
+            optimizee.update_params(optimizee_param_changes)
             
-        #visualize_train_loss(all_optimizee_losses_ever, [])
+        visualize_train_loss(all_optimizee_losses_ever, [])
 
 def test(optimizee, test_inputs, test_labels): 
     # TODO: Form Data 

@@ -38,20 +38,20 @@ class RNN_Optimizer(tf.keras.Model):
         Tell how the optimizee parameter should update 
 
         :param optimizee_grads: optimizee gradients for one optimizee trainable param
-                                [param_shape (= 1)]
+                                [param_shape]
         :param initial_states_for_1: initial states for lstm1. A list containing
                                 [initial_hidden_state, initial_cell_state]
         :param initial_states_for_1: initial states for lstm2. A list containing
                                 [initial_hidden_state, initial_cell_state]
         :return optimizee_updates: optimizee param update for one optimizee trainable param
-                                [param_shape (= 1)]
+                                [param_shape]
                 new_states_for_1: a list containing 
                                 [new_hidden_state_1, new_cell_state_1]
                 new_states_for_2: a list containing 
                                 [new_hidden_state_2, new_cell_state_2]
         '''
         # TODO: implement this 
-        lstm_input = tf.reshape(optimizee_grads, shape = (1, 1, -1))
+        lstm_input = tf.reshape(optimizee_grads, shape = (-1, 1, 1))
         
         lstm1_output, new_hidden_state_1, new_cell_state_1 = self.lstm1(lstm_input, initial_state = initial_state_for_1) 
         lstm2_output, new_hidden_state_2, new_cell_state_2 = self.lstm2(lstm1_output, initial_state = initial_state_for_2)
@@ -59,6 +59,6 @@ class RNN_Optimizer(tf.keras.Model):
         dense1_output = self.dense1(lstm2_output) 
         dense2_output = self.dense2(dense1_output)
 
-        result = tf.reshape(dense2_output, shape = ())
+        result = tf.reshape(dense2_output, shape = (-1))
 
         return result, [new_hidden_state_1, new_cell_state_1], [new_hidden_state_2, new_cell_state_2]

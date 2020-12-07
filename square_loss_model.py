@@ -14,26 +14,20 @@ class Square_Loss_Optimizee(tf.keras.Model):
 
         # Trainable parameters 
         if params == None: 
-            self.theta = tf.Variable(tf.zeros((self.size,)), name = 'Theta')
+            self.theta = tf.Variable(tf.zeros((self.size,)), name = 'theta')
         else: 
-            self.theta = params[0]
+            self.theta = params['theta']
 
         return 
 
-    def get_param_indices(self): 
-        return [[0, i] for i in range(0, self.size)]
-
-    def get_param_shapes(self): 
-        return [(self.size,)]
-
-    def get_param_tensors(self): 
-        return [self.theta]
+    def get_params(self): 
+        return [('theta', self.theta)]
 
     def update_params(self, change_tensors): 
         '''
         :param change_tensors: a list containing just one tensor, which is to be added to self.theta
         '''
-        self.theta.assign_add(change_tensors[0])
+        self.theta.assign_add(change_tensors['theta'])
 
     def call(self, inputs): 
         '''
