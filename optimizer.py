@@ -28,7 +28,7 @@ class RNN_Optimizer(tf.keras.Model):
             units = 1
         )
 
-        self.learning_rate = .001
+        self.learning_rate = .01
         self.adam_optimizer = tf.keras.optimizers.Adam(self.learning_rate)
         return  
 

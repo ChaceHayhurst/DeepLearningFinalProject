@@ -14,7 +14,7 @@ class Square_Loss_Optimizee(tf.keras.Model):
 
         # Trainable parameters 
         if params == None: 
-            self.theta = tf.Variable(tf.zeros((self.size,)), name = 'theta')
+            self.theta = tf.zeros((self.size,), name = 'theta')
         else: 
             self.theta = params['theta']
 
@@ -27,7 +27,7 @@ class Square_Loss_Optimizee(tf.keras.Model):
         '''
         :param change_tensors: a list containing just one tensor, which is to be added to self.theta
         '''
-        self.theta.assign_add(change_tensors['theta'])
+        self.theta += change_tensors['theta']
 
     def call(self, inputs): 
         '''
