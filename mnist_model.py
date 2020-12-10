@@ -4,7 +4,7 @@ class MNIST_Model(tf.keras.Model):
     def __init__(self, params = None): 
         super(MNIST_Model, self).__init__()
         # initialize hyperparameters 
-        self.fc1_unit = 784 
+        self.fc1_unit = 100
         self.num_classes = 10
         self.batch_size = 100
         

@@ -317,7 +317,7 @@ def main(model_name):
         test_inputs = np.reshape(test_inputs, (test_num_examples, -1))
 
     #rnn_optimizer = RNN_Optimizer()
-    rnn_optimizer = RNN_Optimizer([2, 2, 2])
+    rnn_optimizer = RNN_Optimizer([2, 1, 1])
 
     # Train our optimizee-optimizer pair for several epochs 
     num_epochs = 10
