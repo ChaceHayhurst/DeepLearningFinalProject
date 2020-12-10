@@ -8,17 +8,34 @@ class MNIST_Model(tf.keras.Model):
         self.num_classes = 10
         self.batch_size = 100
         
-        # initialize trainable parameters 
-        self.fc1 = tf.keras.layers.Dense(
-            self.fc1_unit, 
-            activation = 'relu'
-        )
-        self.fc2 = tf.keras.layers.Dense(
-            self.num_classes, 
-            activation = 'softmax' 
-        )
+        # initialize trainable parameters
+
+        if params == None:
+            self.fc1 = tf.zeros((self.fc1_unit,), name = 'fc1')
+            self.fc2 = tf.zeros((self.num_classes,), name = 'fc2')
+        else:
+            self.fc1 = params['fc1']
+            self.fc2 = params['fc2']
+        
+        #self.fc1 = tf.keras.layers.Dense(
+        #    self.fc1_unit, 
+        #    activation = 'relu'
+        #)
+        #self.fc2 = tf.keras.layers.Dense(
+        #    self.num_classes, 
+        #    activation = 'softmax' 
+        #)
 
         return  
+
+    def get_params(self):
+        return [('theta', self.theta)]
+
+    def update_params(self, change_tensors): 
+        '''
+        :param change_tensors: a list containing just one tensor, which is to be added to self.theta
+        '''
+        self.theta += change_tensors['theta']
 
     def call(self, input): 
         '''

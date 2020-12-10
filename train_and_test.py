@@ -322,7 +322,8 @@ def main(model_name):
     elif (model_name == "MNIST"): 
         optimizee = MNIST_Model()
 
-    rnn_optimizer = RNN_Optimizer()
+    #rnn_optimizer = RNN_Optimizer()
+    rnn_optimizer = RNN_Optimizer([20, 20, 20])
 
     # Train our optimizee-optimizer pair for several epochs 
     num_epochs = 10

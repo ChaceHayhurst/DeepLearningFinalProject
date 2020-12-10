@@ -2,9 +2,9 @@ import tensorflow as tf
 
 class RNN_Optimizer(tf.keras.Model): 
     def __init__(self, units, unroll_factor = 20, meta_learning_rate = 0.01): 
-    '''
-    :param units: a list of three ints [lstm1_units, lstm2_units, dense_units]
-    '''
+        '''
+        :param units: a list of three ints [lstm1_units, lstm2_units, dense_units]
+        '''
         super(RNN_Optimizer, self).__init__()
         # TODO: Initialize Hyperparameters 
         self.layer1_units = units[0]
