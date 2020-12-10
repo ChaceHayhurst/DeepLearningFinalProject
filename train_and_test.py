@@ -7,7 +7,7 @@ from square_loss_model import Square_Loss_Optimizee, Square_Loss
 from mnist_model import MNIST_Model
 from optimizer import RNN_Optimizer
 from adam import Adam
-
+#version 12/9
 #tf.compat.v1.disable_eager_execution()
 
 def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels = None, loss_computer = None): 
