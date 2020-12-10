@@ -309,8 +309,20 @@ def main(model_name):
         train_inputs = train_inputs.astype(np.float32)
         test_inputs = test_inputs.astype(np.float32)
 
+        # Redistribute data 
+        train_inputs_hd = train_inputs[:35000] 
+        train_inputs_tl = train_inputs[35000:]
+        train_inputs = train_inputs_hd 
+        test_inputs = tf.concat([train_inputs_tl, test_inputs], 0) 
+
+        train_labels_hd = train_labels[:35000] 
+        train_labels_tl = train_labels[35000:]
+        train_labels = train_labels_hd 
+        test_labels = tf.concat([train_labels_tl, test_labels], 0) 
+
         # Compute number of examples 
-        train_num_examples = train_inputs.shape[0]
+        #train_num_examples = train_inputs.shape[0]
+        train_num_examples = 10
         test_num_examples = test_inputs.shape[0]
 
         # Reshape inputs 
@@ -318,7 +330,7 @@ def main(model_name):
         test_inputs = np.reshape(test_inputs, (test_num_examples, -1))
 
     #rnn_optimizer = RNN_Optimizer()
-    rnn_optimizer = RNN_Optimizer([10, 10, 10])
+    rnn_optimizer = RNN_Optimizer([5, 5, 5])
 
     # Train our optimizee-optimizer pair for several epochs 
     num_epochs = 10
