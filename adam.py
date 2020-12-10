@@ -1,6 +1,6 @@
 from collections import defaultdict
 import tensorflow as tf
-
+#version 12/9
 class Adam:
   def __init__(self, learning_rate):
     self.learning_rate = learning_rate
