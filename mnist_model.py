@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+#version 12/9
 class MNIST_Model(tf.keras.Model): 
     def __init__(self, params = None): 
         super(MNIST_Model, self).__init__()
