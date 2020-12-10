@@ -372,4 +372,4 @@ def main(model_name):
     return  
 
 if __name__ == "__main__": 
-    main("SIMPLE_SQUARE")
+    main("MNIST")
