@@ -38,11 +38,10 @@ class MNIST_Model(tf.keras.Model):
         fc1_output = tf.nn.relu(fc1_output)
         fc2_output = tf.linalg.matmul(fc1_output, self.fc2)
         fc2_output = tf.nn.softmax(fc2_output)
-        print(fc2_output)
         
         return fc2_output
 
-    def loss_function(self, predictions, labels): 
+    def loss_function(self, predictions, labels, loss_computer = None): 
         '''
         :param predictions: the outputs from model.call. shape = (batch_sz, num_classes)
         :param labels: the ground truth labels. shape = (batch_sz)
