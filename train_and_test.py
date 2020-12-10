@@ -254,8 +254,9 @@ def benchmark_train(optimizee, optimizer, num_examples, train_inputs = None, tra
         # Backprop on Optimizee
 
         gradient = optimizee_tape.gradient(loss, optimizee_params_list)
-        change = optimizer.call(gradient, optimizee_params_list)
-        optimizee.update_params({'theta':change}) # TODO: Fix this for MNIST!! 
+        changes = optimizer.call(gradient, optimizee_params_list)
+        changes_dict = {optimizee_params[i][0]:changes[i] for i in range(len(changes))}
+        optimizee.update_params(changes_dict) 
             
     return all_optimizee_losses_ever 
 

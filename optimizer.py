@@ -1,13 +1,16 @@
 import tensorflow as tf
 
 class RNN_Optimizer(tf.keras.Model): 
-    def __init__(self): 
+    def __init__(self, units, unroll_factor = 20, meta_learning_rate = 0.01): 
+    '''
+    :param units: a list of three ints [lstm1_units, lstm2_units, dense_units]
+    '''
         super(RNN_Optimizer, self).__init__()
         # TODO: Initialize Hyperparameters 
-        self.layer1_units = 2
-        self.layer2_units = 2
-        self.dense_units = 2
-        self.unroll_factor = 20
+        self.layer1_units = units[0]
+        self.layer2_units = units[1]
+        self.dense_units = units[2]
+        self.unroll_factor = unroll_factor
         
         # TODO: Initialize Trainable Parameters 
         self.lstm1 = tf.keras.layers.LSTM(
@@ -28,7 +31,7 @@ class RNN_Optimizer(tf.keras.Model):
             units = 1
         )
 
-        self.learning_rate = .01
+        self.learning_rate = meta_learning_rate
         self.adam_optimizer = tf.keras.optimizers.Adam(self.learning_rate)
         return  
 
