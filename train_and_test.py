@@ -151,14 +151,14 @@ def test(optimizee, optimizer, num_examples, train_inputs = None, train_labels =
     state_size_for_2 = optimizer.layer2_units
     initial_states_for_1 = {
         param_name:[
-            tf.zeros(param_tensor.shape.concatenate(state_size_for_1), dtype = tf.float32), 
-            tf.zeros(param_tensor.shape.concatenate(state_size_for_1), dtype = tf.float32)
+            tf.zeros(tf.reshape(param_tensor, (-1)).shape.concatenate(state_size_for_1), dtype = tf.float32), 
+            tf.zeros(tf.reshape(param_tensor, (-1)).shape.concatenate(state_size_for_1), dtype = tf.float32)
         ] for param_name, param_tensor in optimizee_params
     }
     initial_states_for_2 = {
         param_name:[
-            tf.zeros(param_tensor.shape.concatenate(state_size_for_2), dtype = tf.float32), 
-            tf.zeros(param_tensor.shape.concatenate(state_size_for_2), dtype = tf.float32)
+            tf.zeros(tf.reshape(param_tensor, (-1)).shape.concatenate(state_size_for_2), dtype = tf.float32), 
+            tf.zeros(tf.reshape(param_tensor, (-1)).shape.concatenate(state_size_for_2), dtype = tf.float32)
         ] for param_name, param_tensor in optimizee_params
     } # NOTE: in the initial_states dicts, param_ids are hashed after passing to string form 
 
@@ -187,14 +187,14 @@ def test(optimizee, optimizer, num_examples, train_inputs = None, train_labels =
 
         new_states_for_1 = {
             param_name:[
-                tf.zeros(param_tensor.shape.concatenate(state_size_for_1), dtype = tf.float32), 
-                tf.zeros(param_tensor.shape.concatenate(state_size_for_1), dtype = tf.float32)
+                tf.zeros(tf.reshape(param_tensor, (-1)).shape.concatenate(state_size_for_1), dtype = tf.float32), 
+                tf.zeros(tf.reshape(param_tensor, (-1)).shape.concatenate(state_size_for_1), dtype = tf.float32)
             ] for param_name, param_tensor in optimizee_params       
         }
         new_states_for_2 = {
             param_name:[
-                tf.zeros(param_tensor.shape.concatenate(state_size_for_2), dtype = tf.float32), 
-                tf.zeros(param_tensor.shape.concatenate(state_size_for_2), dtype = tf.float32)
+                tf.zeros(tf.reshape(param_tensor, (-1)).shape.concatenate(state_size_for_2), dtype = tf.float32), 
+                tf.zeros(tf.reshape(param_tensor, (-1)).shape.concatenate(state_size_for_2), dtype = tf.float32)
             ] for param_name, param_tensor in optimizee_params
         }
         optimizee_param_changes = {}
@@ -307,6 +307,7 @@ def main(model_name):
         # Normalize data 
         train_inputs, test_inputs = train_inputs / 255.0, test_inputs / 255.0 
         train_inputs = train_inputs.astype(np.float32)
+        test_inputs = test_inputs.astype(np.float32)
 
         # Compute number of examples 
         train_num_examples = train_inputs.shape[0]
@@ -317,7 +318,7 @@ def main(model_name):
         test_inputs = np.reshape(test_inputs, (test_num_examples, -1))
 
     #rnn_optimizer = RNN_Optimizer()
-    rnn_optimizer = RNN_Optimizer([2, 1, 1])
+    rnn_optimizer = RNN_Optimizer([10, 10, 10])
 
     # Train our optimizee-optimizer pair for several epochs 
     num_epochs = 10
