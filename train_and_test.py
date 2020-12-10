@@ -77,7 +77,7 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
                 tf.zeros(param_tensor.shape.concatenate(state_size_for_2), dtype = tf.float32)
             ] for param_name, param_tensor in optimizee_params
         }
-        new_optimizee_params = {param_name:tf.convert_to_tensor(param_tensor.numpy(), name = 'theta') for param_name, param_tensor in optimizee_params}
+        new_optimizee_params = {param_name:tf.convert_to_tensor(param_tensor.numpy(), name = str(param_name)) for param_name, param_tensor in optimizee_params}
         optimizee_param_changes = {}
 
         optimizee_tape.__exit__(None, None, None)
