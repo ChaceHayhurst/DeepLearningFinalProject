@@ -316,19 +316,18 @@ def main(model_name):
         train_inputs = np.reshape(train_inputs, (train_num_examples, -1)) 
         test_inputs = np.reshape(test_inputs, (test_num_examples, -1))
 
-    # Initialize optimizee for training optimizer
-    if (model_name == "SIMPLE_SQUARE"): 
-        optimizee = Square_Loss_Optimizee(size = 2) 
-    elif (model_name == "MNIST"): 
-        optimizee = MNIST_Model()
-
     #rnn_optimizer = RNN_Optimizer()
-    rnn_optimizer = RNN_Optimizer([20, 20, 20])
+    rnn_optimizer = RNN_Optimizer([2, 2, 2])
 
     # Train our optimizee-optimizer pair for several epochs 
     num_epochs = 10
     
     for i in range(0, num_epochs): 
+        # Initialize optimizee for training optimizer
+        if (model_name == "SIMPLE_SQUARE"): 
+            optimizee = Square_Loss_Optimizee(size = 2) 
+        elif (model_name == "MNIST"): 
+            optimizee = MNIST_Model()
         print("Starting epoch {}".format(i+1))
         train(
             optimizee, 
