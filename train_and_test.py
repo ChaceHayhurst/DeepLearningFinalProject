@@ -334,8 +334,7 @@ def main(model_name):
         test_labels = tf.concat([train_labels_tl, test_labels], 0) 
 
         # Compute number of examples 
-        #train_num_examples = train_inputs.shape[0]
-        train_num_examples = 10
+        train_num_examples = train_inputs.shape[0]
         test_num_examples = test_inputs.shape[0]
 
         # Reshape inputs 
