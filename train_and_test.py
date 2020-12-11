@@ -141,6 +141,7 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
     #visualize_train_loss(all_optimizee_losses_ever, [])
 
 def test(optimizee, optimizer, num_examples, train_inputs = None, train_labels = None, loss_computer = None): 
+    print('TESTING RNN OPTIMIZER')
     batch_size = optimizee.batch_size 
 
     # Grab Optimizee Params ids for making the dicts 
@@ -168,7 +169,6 @@ def test(optimizee, optimizer, num_examples, train_inputs = None, train_labels =
     for batch in range(0, num_examples // batch_size): 
         optimizee_params = optimizee.get_params()
         print("Starting batch {}".format(batch))
-        print('optimizee.get_params(): ' + str(optimizee_params))
 
         train_inputs_batch = train_inputs[batch*batch_size:(batch+1)*batch_size] if not train_inputs is None else None
         train_labels_batch = train_labels[batch*batch_size:(batch+1)*batch_size] if not train_labels is None else None
@@ -180,7 +180,6 @@ def test(optimizee, optimizer, num_examples, train_inputs = None, train_labels =
             optimizee_tape.watch(param_tensor)
 
         optimizee_output = optimizee.call(train_inputs_batch)
-        print('optimizee.call(train_inputs_batch): ' + str(optimizee_output))
         loss = optimizee.loss_function(optimizee_output, train_labels_batch, loss_computer) 
 
         # Preparation for Backprop 
@@ -220,11 +219,8 @@ def test(optimizee, optimizer, num_examples, train_inputs = None, train_labels =
             optimizee_param_changes[param_name] = change
 
         initial_states_for_1 = new_states_for_1
-        print('new_state_for_1: ' + str(initial_states_for_1))
         initial_states_for_2 = new_states_for_2
-        print('new_state_for_2: ' + str(initial_states_for_2))
         optimizee.update_params(optimizee_param_changes)
-        print('optimizee_param_changes: ' + str(optimizee_param_changes))
             
     return all_optimizee_losses_ever 
 
@@ -236,10 +232,15 @@ def benchmark_train(optimizee, optimizer, num_examples, train_inputs = None, tra
         
     for batch in range(0, num_examples // batch_size): 
         optimizee_params = optimizee.get_params() #NOTE: optimizee_params is a list of tuples (param_name, param_tensor)
+        #print('optimizee_params: ' + str(optimizee_params))
+        optimizee_params_list = [param_tensor for _, param_tensor in optimizee_params] 
+        #print('optimizee_params_list: ' + str(optimizee_params_list))
         print("Starting batch {}".format(batch))
 
         train_inputs_batch = train_inputs[batch*batch_size:(batch+1)*batch_size] if not train_inputs is None else None
         train_labels_batch = train_labels[batch*batch_size:(batch+1)*batch_size] if not train_labels is None else None
+        #print("batch shape: " + str(tf.shape(train_inputs_batch)))
+        #print("batch label shape: " + str(tf.shape(train_labels_batch)))
         
         # Optimizee Forward Pass 
         optimizee_tape = tf.GradientTape(persistent=True) 
@@ -248,6 +249,7 @@ def benchmark_train(optimizee, optimizer, num_examples, train_inputs = None, tra
             optimizee_tape.watch(param_tensor)
 
         optimizee_output = optimizee.call(train_inputs_batch)
+        #print('optimizee_output: ' + str(optimizee_output))
         loss = optimizee.loss_function(optimizee_output, train_labels_batch, loss_computer) 
 
         # Preparation for Backprop 
@@ -259,7 +261,9 @@ def benchmark_train(optimizee, optimizer, num_examples, train_inputs = None, tra
 
         gradient = optimizee_tape.gradient(loss, optimizee_params_list)
         changes = optimizer.call(gradient, optimizee_params_list)
+        #print('MUH CHANGES: ' + str(changes))
         changes_dict = {optimizee_params[i][0]:changes[i] for i in range(len(changes))}
+        #print('MUH CHANGES: ' + str(changes_dict))
         optimizee.update_params(changes_dict) 
             
     return all_optimizee_losses_ever 
@@ -325,8 +329,7 @@ def main(model_name):
         test_labels = tf.concat([train_labels_tl, test_labels], 0) 
 
         # Compute number of examples 
-        #train_num_examples = train_inputs.shape[0]
-        train_num_examples = 10
+        train_num_examples = train_inputs.shape[0]
         test_num_examples = test_inputs.shape[0]
 
         # Reshape inputs 
