@@ -141,6 +141,7 @@ def train(optimizee, optimizer, num_examples, train_inputs = None, train_labels 
     #visualize_train_loss(all_optimizee_losses_ever, [])
 
 def test(optimizee, optimizer, num_examples, train_inputs = None, train_labels = None, loss_computer = None): 
+    print('TESTING RNN OPTIMIZER')
     batch_size = optimizee.batch_size 
 
     # Grab Optimizee Params ids for making the dicts 
@@ -168,7 +169,7 @@ def test(optimizee, optimizer, num_examples, train_inputs = None, train_labels =
     for batch in range(0, num_examples // batch_size): 
         optimizee_params = optimizee.get_params()
         print("Starting batch {}".format(batch))
-        print('optimizee_params: ' + str(optimizee_params))
+        print('optimizee.get_params(): ' + str(optimizee_params))
 
         train_inputs_batch = train_inputs[batch*batch_size:(batch+1)*batch_size] if not train_inputs is None else None
         train_labels_batch = train_labels[batch*batch_size:(batch+1)*batch_size] if not train_labels is None else None
@@ -180,7 +181,7 @@ def test(optimizee, optimizer, num_examples, train_inputs = None, train_labels =
             optimizee_tape.watch(param_tensor)
 
         optimizee_output = optimizee.call(train_inputs_batch)
-        print('optimizee_output: ' + str(optimizee_output))
+        print('optimizee.call(train_inputs_batch): ' + str(optimizee_output))
         loss = optimizee.loss_function(optimizee_output, train_labels_batch, loss_computer) 
 
         # Preparation for Backprop 
@@ -220,11 +221,11 @@ def test(optimizee, optimizer, num_examples, train_inputs = None, train_labels =
             optimizee_param_changes[param_name] = change
 
         initial_states_for_1 = new_states_for_1
-        print('updated initial states: ' + str(initial_states_for_1))
+        print('new_states_for_1: ' + str(initial_states_for_1))
         initial_states_for_2 = new_states_for_2
-        print(initial_states_for_2)
+        print('new_states_for_2: ' + str(initial_states_for_2))
         optimizee.update_params(optimizee_param_changes)
-        print('update_params: ' + str(optimizee_param_changes))
+        print('optimizee_param_changes: ' + str(optimizee_param_changes))
             
     return all_optimizee_losses_ever 
 
