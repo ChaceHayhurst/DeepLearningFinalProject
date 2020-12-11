@@ -1,0 +1,13 @@
+This is the Optimizer^3 Team's Metalearning model. 
+
+To run, use 
+    python train_and_test.py
+
+By default, the optimizee is an MNIST categorization model. 
+To switch to a simple square loss model, go to train_and_test.py
+and change the last line of the file into 
+
+    main("SIMPLE_SQUARE")
+
+KNOWN BUGS: 
+Cannot run on GCP due to incompatibility between tf 2.3.0 and cudnn 8
