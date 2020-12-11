@@ -10,7 +10,7 @@ class Adam:
     
     self.m = None  # First moment vectors
     self.v = None  # Second moment vectors.
-    self.t = 0  # Time counter
+    self.t = 0.0  # Time counter
       
   def call(self, gradients, parameters):
     if self.m is None: 
@@ -28,6 +28,6 @@ class Adam:
         m_hat = self.m[i] / (1 - self.beta_1**self.t)
         v_hat = self.v[i] / (1 - self.beta_2**self.t)
     
-        change += [-(self.learning_rate * m_hat / (v_hat**0.5 + self.epsilon))]
+        change += [-(self.learning_rate * m_hat / (tf.math.sqrt(v_hat) + self.epsilon))]
 
     return change
